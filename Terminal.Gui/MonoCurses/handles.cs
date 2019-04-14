@@ -25,110 +25,99 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+
 using System;
-using System.Runtime.InteropServices;
 
 namespace Unix.Terminal {
-
-	internal partial class Curses {
+	partial class Curses {
 		internal class Window {
 			public readonly IntPtr Handle;
-			static Window curscr;
-			static Window stdscr;
 
-			static Window ()
+			static Window()
 			{
-				Curses.initscr ();
-				stdscr = new Window (Curses.console_sharp_get_stdscr ());
-				curscr = new Window (Curses.console_sharp_get_curscr ());
+				initscr();
+				Standard = new Window(console_sharp_get_stdscr());
+				Current = new Window(console_sharp_get_curscr());
 			}
 
-			internal Window (IntPtr handle)
+			internal Window(IntPtr handle)
 			{
 				Handle = handle;
 			}
 
-			static public Window Standard {
-				get {
-					return stdscr;
-				}
-			}
+			public static Window Standard { get; }
 
-			static public Window Current {
-				get {
-					return curscr;
-				}
-			}
+			public static Window Current { get; }
 
 
-			public int wtimeout (int delay)
+			public int wtimeout(int delay)
 			{
-				return Curses.wtimeout (Handle, delay);
+				return Curses.wtimeout(Handle, delay);
 			}
 
-			public int notimeout (bool bf)
+			public int notimeout(bool bf)
 			{
-				return Curses.notimeout (Handle, bf);
+				return Curses.notimeout(Handle, bf);
 			}
 
-			public int keypad (bool bf)
+			public int keypad(bool bf)
 			{
-				return Curses.keypad (Handle, bf);
+				return Curses.keypad(Handle, bf);
 			}
 
-			public int meta (bool bf)
+			public int meta(bool bf)
 			{
-				return Curses.meta (Handle, bf);
+				return Curses.meta(Handle, bf);
 			}
 
-			public int intrflush (bool bf)
+			public int intrflush(bool bf)
 			{
-				return Curses.intrflush (Handle, bf);
+				return Curses.intrflush(Handle, bf);
 			}
 
-			public int clearok (bool bf)
+			public int clearok(bool bf)
 			{
-				return Curses.clearok (Handle, bf);
+				return Curses.clearok(Handle, bf);
 			}
 
-			public int idlok (bool bf)
+			public int idlok(bool bf)
 			{
-				return Curses.idlok (Handle, bf);
+				return Curses.idlok(Handle, bf);
 			}
 
-			public void idcok (bool bf)
+			public void idcok(bool bf)
 			{
-				Curses.idcok (Handle, bf);
+				Curses.idcok(Handle, bf);
 			}
 
-			public void immedok (bool bf)
+			public void immedok(bool bf)
 			{
-				Curses.immedok (Handle, bf);
+				Curses.immedok(Handle, bf);
 			}
 
-			public int leaveok (bool bf)
+			public int leaveok(bool bf)
 			{
-				return Curses.leaveok (Handle, bf);
+				return Curses.leaveok(Handle, bf);
 			}
 
-			public int setscrreg (int top, int bot)
+			public int setscrreg(int top, int bot)
 			{
-				return Curses.wsetscrreg (Handle, top, bot);
+				return wsetscrreg(Handle, top, bot);
 			}
 
-			public int scrollok (bool bf)
+			public int scrollok(bool bf)
 			{
-				return Curses.scrollok (Handle, bf);
+				return Curses.scrollok(Handle, bf);
 			}
 
-			public int wrefresh ()
+			public int wrefresh()
 			{
-				return Curses.wrefresh (Handle);
+				return Curses.wrefresh(Handle);
 			}
 
-			public int redrawwin ()
+			public int redrawwin()
 			{
-				return Curses.redrawwin (Handle);
+				return Curses.redrawwin(Handle);
 			}
 
 #if false
@@ -137,37 +126,35 @@ namespace Unix.Terminal {
 				return Curses.wredrawwin (Handle, beg_line, num_lines);
 			}
 #endif
-			public int wnoutrefresh ()
+			public int wnoutrefresh()
 			{
-				return Curses.wnoutrefresh (Handle);
+				return Curses.wnoutrefresh(Handle);
 			}
-	
-			public int move (int line, int col)
+
+			public int move(int line, int col)
 			{
-				return Curses.wmove (Handle, line, col);
+				return wmove(Handle, line, col);
 			}
-	
-			public int addch (char ch)
+
+			public int addch(char ch)
 			{
-				return Curses.waddch (Handle, ch);
+				return waddch(Handle, ch);
 			}
-	
-			public int refresh ()
+
+			public int refresh()
 			{
-				return Curses.wrefresh (Handle);
+				return Curses.wrefresh(Handle);
 			}
 		}
-	
-	 	// Currently unused, to do later
-	 	internal class Screen {
-	 		public readonly IntPtr Handle;
-	 		
-	 		internal Screen (IntPtr handle)
-	 		{
-	 			Handle = handle;
-	 		}
-	 	}
-	 
-	}
 
+		// Currently unused, to do later
+		internal class Screen {
+			public readonly IntPtr Handle;
+
+			internal Screen(IntPtr handle)
+			{
+				Handle = handle;
+			}
+		}
+	}
 }

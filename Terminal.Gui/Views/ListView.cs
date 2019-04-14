@@ -17,23 +17,23 @@
 //   - It seems that this would be useful just for the "simple" API, not the IListDAtaSource, as that one has full support for it.
 //   - Should a function be specified that retrieves the individual elements?   
 // 
+
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using NStack;
 
 namespace Terminal.Gui {
 	/// <summary>
-	/// Implement this interface to provide your own custom rendering for a list.
+	///     Implement this interface to provide your own custom rendering for a list.
 	/// </summary>
 	public interface IListDataSource {
 		/// <summary>
-		/// Returns the number of elements to display
+		///     Returns the number of elements to display
 		/// </summary>
 		int Count { get; }
 
 		/// <summary>
-		/// This method is invoked to render a specified item, the method should cover the entire provided width.
+		///     This method is invoked to render a specified item, the method should cover the entire provided width.
 		/// </summary>
 		/// <returns>The render.</returns>
 		/// <param name="selected">Describes whether the item being rendered is currently selected by the user.</param>
@@ -42,119 +42,122 @@ namespace Terminal.Gui {
 		/// <param name="line">The line where the rendering will be done.</param>
 		/// <param name="width">The width that must be filled out.</param>
 		/// <remarks>
-		///   The default color will be set before this method is invoked, and will be based on whether the item is selected or not.
+		///     The default color will be set before this method is invoked, and will be based on whether the item is selected or
+		///     not.
 		/// </remarks>
-		void Render (ListView container, ConsoleDriver driver, bool selected, int item, int col, int line, int width);
+		void Render(ListView container, ConsoleDriver driver, bool selected, int item, int col, int line, int width);
 
 		/// <summary>
-		/// Should return whether the specified item is currently marked.
+		///     Should return whether the specified item is currently marked.
 		/// </summary>
 		/// <returns><c>true</c>, if marked, <c>false</c> otherwise.</returns>
 		/// <param name="item">Item index.</param>
-		bool IsMarked (int item);
+		bool IsMarked(int item);
 
 		/// <summary>
-		/// Flags the item as marked.
+		///     Flags the item as marked.
 		/// </summary>
 		/// <param name="item">Item index.</param>
 		/// <param name="value">If set to <c>true</c> value.</param>
-		void SetMark (int item, bool value);
+		void SetMark(int item, bool value);
 	}
 
 	/// <summary>
-	/// ListView widget renders a list of data.
+	///     ListView widget renders a list of data.
 	/// </summary>
 	/// <remarks>
-	/// <para>
-	///   The ListView displays lists of data and allows the user to scroll through the data
-	///   and optionally mark elements of the list (controlled by the AllowsMark property).  
-	/// </para>
-	/// <para>
-	///   The ListView can either render an arbitrary IList object (for example, arrays, List&lt;T&gt;
-	///   and other collections) which are drawn by drawing the string/ustring contents or the 
-	///   result of calling ToString().   Alternatively, you can provide you own IListDataSource
-	///   object that gives you full control of what is rendered.
-	/// </para>
-	/// <para>
-	///   The ListView can display any object that implements the System.Collection.IList interface,
-	///   string values are converted into ustring values before rendering, and other values are
-	///   converted into ustrings by calling ToString() and then converting to ustring.
-	/// </para>
-	/// <para>
-	///   If you must change the contents of the ListView, set the Source property (when you are
-	///   providing your own rendering via the IListDataSource implementation) or call SetSource
-	///   when you are providing an IList.
-	/// </para>
+	///     <para>
+	///         The ListView displays lists of data and allows the user to scroll through the data
+	///         and optionally mark elements of the list (controlled by the AllowsMark property).
+	///     </para>
+	///     <para>
+	///         The ListView can either render an arbitrary IList object (for example, arrays, List&lt;T&gt;
+	///         and other collections) which are drawn by drawing the string/ustring contents or the
+	///         result of calling ToString().   Alternatively, you can provide you own IListDataSource
+	///         object that gives you full control of what is rendered.
+	///     </para>
+	///     <para>
+	///         The ListView can display any object that implements the System.Collection.IList interface,
+	///         string values are converted into ustring values before rendering, and other values are
+	///         converted into ustrings by calling ToString() and then converting to ustring.
+	///     </para>
+	///     <para>
+	///         If you must change the contents of the ListView, set the Source property (when you are
+	///         providing your own rendering via the IListDataSource implementation) or call SetSource
+	///         when you are providing an IList.
+	///     </para>
 	/// </remarks>
 	public class ListView : View {
-		int top;
+		bool allowsMarking;
 		int selected;
 
-		//
-		// This class is the built-in IListDataSource that renders arbitrary
-		// IList instances
-		//
-		class ListWrapper : IListDataSource {
-			IList src;
-			BitArray marks;
-			int count;
+		IListDataSource source;
+		int top;
 
-			public ListWrapper (IList source)
-			{
-				count = source.Count;
-				marks = new BitArray (count);
-				this.src = source;
-			}
-
-			public int Count => src.Count;
-
-			void RenderUstr (ConsoleDriver driver, ustring ustr, int col, int line, int width)
-			{
-				int byteLen = ustr.Length;
-				int used = 0;
-				for (int i = 0; i < byteLen;) {
-					(var rune, var size) = Utf8.DecodeRune (ustr, i, i - byteLen);
-					var count = Rune.ColumnWidth (rune);
-					if (used+count >= width)
-						break;
-					driver.AddRune (rune);
-					used += count;
-					i += size;
-				}
-				for (; used < width; used++) {
-					driver.AddRune (' ');
-				}
-			}
-
-			public void Render (ListView container, ConsoleDriver driver, bool marked, int item, int col, int line, int width)
-			{
-				container.Move (col, line);
-				var t = src [item];
-				if (t is ustring) {
-					RenderUstr (driver, (ustring)t, col, line, width);
-				} else if (t is string) {
-					RenderUstr (driver, (string)t, col, line, width);
-				} else
-					RenderUstr (driver, t.ToString (), col, line, width);
-			}
-
-			public bool IsMarked (int item)
-			{
-				if (item >= 0 && item < count)
-					return marks [item];
-				return false;
-			}
-
-			public void SetMark (int item, bool value)
-			{
-				if (item >= 0 && item < count)
-					marks [item] = value;
-			}
+		/// <summary>
+		///     Initializes a new ListView that will display the contents of the object implementing the IList interface, with
+		///     relative positioning
+		/// </summary>
+		/// <param name="source">
+		///     An IList data source, if the elements of the IList are strings or ustrings, the string is
+		///     rendered, otherwise the ToString() method is invoked on the result.
+		/// </param>
+		public ListView(IList source) : this(MakeWrapper(source))
+		{
 		}
 
-		IListDataSource source;
 		/// <summary>
-		/// Gets or sets the IListDataSource backing this view, use SetSource() if you want to set a new IList source.
+		///     Initializes a new ListView that will display the provided data source, uses relative positioning.
+		/// </summary>
+		/// <param name="source">
+		///     IListDataSource object that provides a mechanism to render the data. The number of elements on the
+		///     collection should not change, if you must change, set the "Source" property to reset the internal settings of the
+		///     ListView.
+		/// </param>
+		public ListView(IListDataSource source)
+		{
+			Source = source;
+			CanFocus = true;
+		}
+
+		/// <summary>
+		///     Initializes a new instance of the <see cref="T:Terminal.Gui.ListView" /> class.   You must set the Source property
+		///     for this to show something.
+		/// </summary>
+		public ListView()
+		{
+		}
+
+		/// <summary>
+		///     Initializes a new ListView that will display the contents of the object implementing the IList interface with an
+		///     absolute position.
+		/// </summary>
+		/// <param name="rect">Frame for the listview.</param>
+		/// <param name="source">
+		///     An IList data source, if the elements of the IList are strings or ustrings, the string is
+		///     rendered, otherwise the ToString() method is invoked on the result.
+		/// </param>
+		public ListView(Rect rect, IList source) : this(rect, MakeWrapper(source))
+		{
+		}
+
+		/// <summary>
+		///     Initializes a new ListView that will display the provided data source  with an absolute position
+		/// </summary>
+		/// <param name="rect">Frame for the listview.</param>
+		/// <param name="source">
+		///     IListDataSource object that provides a mechanism to render the data. The number of elements on the
+		///     collection should not change, if you must change, set the "Source" property to reset the internal settings of the
+		///     ListView.
+		/// </param>
+		public ListView(Rect rect, IListDataSource source) : base(rect)
+		{
+			Source = source;
+			CanFocus = true;
+		}
+
+		/// <summary>
+		///     Gets or sets the IListDataSource backing this view, use SetSource() if you want to set a new IList source.
 		/// </summary>
 		/// <value>The source.</value>
 		public IListDataSource Source {
@@ -163,38 +166,24 @@ namespace Terminal.Gui {
 				source = value;
 				top = 0;
 				selected = 0;
-				SetNeedsDisplay ();
+				SetNeedsDisplay();
 			}
 		}
 
 		/// <summary>
-		/// Sets the source to an IList value, if you want to set a full IListDataSource, use the Source property.
-		/// </summary>
-		/// <value>An item implementing the IList interface.</value>
-		public void SetSource (IList source)
-		{
-			if (source == null)
-				Source = null;
-			else {
-				Source = MakeWrapper (source);
-			}
-		}
-
-		bool allowsMarking;
-		/// <summary>
-		/// Gets or sets a value indicating whether this <see cref="T:Terminal.Gui.ListView"/> allows items to be marked.
+		///     Gets or sets a value indicating whether this <see cref="T:Terminal.Gui.ListView" /> allows items to be marked.
 		/// </summary>
 		/// <value><c>true</c> if allows marking elements of the list; otherwise, <c>false</c>.</value>
 		public bool AllowsMarking {
 			get => allowsMarking;
 			set {
 				allowsMarking = value;
-				SetNeedsDisplay ();
+				SetNeedsDisplay();
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets the item that is displayed at the top of the listview
+		///     Gets or sets the item that is displayed at the top of the listview
 		/// </summary>
 		/// <value>The top item.</value>
 		public int TopItem {
@@ -202,16 +191,16 @@ namespace Terminal.Gui {
 			set {
 				if (source == null)
 					return;
-				
+
 				if (top < 0 || top >= source.Count)
-					throw new ArgumentException ("value");
+					throw new ArgumentException("value");
 				top = value;
-				SetNeedsDisplay ();
+				SetNeedsDisplay();
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets the currently selecteded item.
+		///     Gets or sets the currently selecteded item.
 		/// </summary>
 		/// <value>The selected item.</value>
 		public int SelectedItem {
@@ -220,7 +209,7 @@ namespace Terminal.Gui {
 				if (source == null)
 					return;
 				if (selected < 0 || selected >= source.Count)
-					throw new ArgumentException ("value");
+					throw new ArgumentException("value");
 				selected = value;
 				if (selected < top)
 					top = selected;
@@ -229,104 +218,70 @@ namespace Terminal.Gui {
 			}
 		}
 
-
-		static IListDataSource MakeWrapper (IList source)
-		{
-			return new ListWrapper (source);
-		}
-
 		/// <summary>
-		/// Initializes a new ListView that will display the contents of the object implementing the IList interface, with relative positioning
+		///     Sets the source to an IList value, if you want to set a full IListDataSource, use the Source property.
 		/// </summary>
-		/// <param name="source">An IList data source, if the elements of the IList are strings or ustrings, the string is rendered, otherwise the ToString() method is invoked on the result.</param>
-		public ListView (IList source) : this (MakeWrapper (source))
+		/// <value>An item implementing the IList interface.</value>
+		public void SetSource(IList source)
 		{
+			if (source == null)
+				Source = null;
+			else
+				Source = MakeWrapper(source);
+		}
+
+
+		static IListDataSource MakeWrapper(IList source)
+		{
+			return new ListWrapper(source);
 		}
 
 		/// <summary>
-		/// Initializes a new ListView that will display the provided data source, uses relative positioning.
-		/// </summary>
-		/// <param name="source">IListDataSource object that provides a mechanism to render the data. The number of elements on the collection should not change, if you must change, set the "Source" property to reset the internal settings of the ListView.</param>
-		public ListView (IListDataSource source) : base ()
-		{
-			Source = source;
-			CanFocus = true;
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Terminal.Gui.ListView"/> class.   You must set the Source property for this to show something.
-		/// </summary>
-		public ListView () : base ()
-		{
-		}
-
-		/// <summary>
-		/// Initializes a new ListView that will display the contents of the object implementing the IList interface with an absolute position.
-		/// </summary>
-		/// <param name="rect">Frame for the listview.</param>
-		/// <param name="source">An IList data source, if the elements of the IList are strings or ustrings, the string is rendered, otherwise the ToString() method is invoked on the result.</param>
-		public ListView (Rect rect, IList source) : this (rect, MakeWrapper (source))
-		{
-		}
-
-		/// <summary>
-		/// Initializes a new ListView that will display the provided data source  with an absolute position
-		/// </summary>
-		/// <param name="rect">Frame for the listview.</param>
-		/// <param name="source">IListDataSource object that provides a mechanism to render the data. The number of elements on the collection should not change, if you must change, set the "Source" property to reset the internal settings of the ListView.</param>
-		public ListView (Rect rect, IListDataSource source) : base (rect)
-		{
-			Source = source;
-			CanFocus = true;
-		}
-
-		/// <summary>
-		/// Redraws the ListView
+		///     Redraws the ListView
 		/// </summary>
 		/// <param name="region">Region.</param>
 		public override void Redraw(Rect region)
 		{
 			var current = ColorScheme.Focus;
-			Driver.SetAttribute (current);
-			Move (0, 0);
+			Driver.SetAttribute(current);
+			Move(0, 0);
 			var f = Frame;
 			var item = top;
-			bool focused = HasFocus;
+			var focused = HasFocus;
 
-			for (int row = 0; row < f.Height; row++, item++) {
-				bool isSelected = item == selected;
+			for (var row = 0; row < f.Height; row++, item++) {
+				var isSelected = item == selected;
 
-				var newcolor = focused ? (isSelected ? ColorScheme.Focus : ColorScheme.Normal) : ColorScheme.Normal;
+				var newcolor = focused ? isSelected ? ColorScheme.Focus : ColorScheme.Normal : ColorScheme.Normal;
 				if (newcolor != current) {
-					Driver.SetAttribute (newcolor);
+					Driver.SetAttribute(newcolor);
 					current = newcolor;
 				}
 
-				if (source == null || item >= source.Count) {
-					Move(0, row);
-					for (int c = 0; c < f.Width; c++)
+				Move(0, row);
+				if (source == null || item >= source.Count)
+					for (var c = 0; c < f.Width; c++)
 						Driver.AddRune(' ');
-				} else {
+				else
 					Source.Render(this, Driver, isSelected, item, 0, row, f.Width);
-				}
 			}
 		}
 
 		/// <summary>
-		/// This event is raised when the cursor selection has changed.
+		///     This event is raised when the cursor selection has changed.
 		/// </summary>
 		public event Action SelectedChanged;
 
 		/// <summary>
-		/// Handles cursor movement for this view, passes all other events.
+		///     Handles cursor movement for this view, passes all other events.
 		/// </summary>
 		/// <returns><c>true</c>, if key was processed, <c>false</c> otherwise.</returns>
 		/// <param name="kb">Keyboard event.</param>
-		public override bool ProcessKey (KeyEvent kb)
+		public override bool ProcessKey(KeyEvent kb)
 		{
 			if (source == null)
-				return base.ProcessKey (kb);
-			
+				return base.ProcessKey(kb);
+
 			switch (kb.Key) {
 			case Key.CursorUp:
 			case Key.ControlP:
@@ -335,9 +290,10 @@ namespace Terminal.Gui {
 					if (selected < top)
 						top = selected;
 					if (SelectedChanged != null)
-						SelectedChanged ();
-					SetNeedsDisplay ();
+						SelectedChanged();
+					SetNeedsDisplay();
 				}
+
 				return true;
 
 			case Key.CursorDown:
@@ -347,14 +303,15 @@ namespace Terminal.Gui {
 					if (selected >= top + Frame.Height)
 						top++;
 					if (SelectedChanged != null)
-						SelectedChanged ();
-					SetNeedsDisplay ();
+						SelectedChanged();
+					SetNeedsDisplay();
 				}
+
 				return true;
 
 			case Key.ControlV:
 			case Key.PageDown:
-				var n = (selected + Frame.Height);
+				var n = selected + Frame.Height;
 				if (n > source.Count)
 					n = source.Count - 1;
 				if (n != selected) {
@@ -364,54 +321,126 @@ namespace Terminal.Gui {
 					else
 						top = 0;
 					if (SelectedChanged != null)
-						SelectedChanged ();
-					SetNeedsDisplay ();
+						SelectedChanged();
+					SetNeedsDisplay();
 				}
+
 				return true;
 
 			case Key.PageUp:
-				n = (selected - Frame.Height);
+				n = selected - Frame.Height;
 				if (n < 0)
 					n = 0;
 				if (n != selected) {
 					selected = n;
 					top = selected;
 					if (SelectedChanged != null)
-						SelectedChanged ();
-					SetNeedsDisplay ();
+						SelectedChanged();
+					SetNeedsDisplay();
 				}
+
+				return true;
+			case Key.Space:
+				Source.SetMark(selected, !Source.IsMarked(selected));
+				SetNeedsDisplay();
 				return true;
 			}
-			return base.ProcessKey (kb);
+
+			return base.ProcessKey(kb);
 		}
 
 		/// <summary>
-		/// Positions the cursor in this view
+		///     Positions the cursor in this view
 		/// </summary>
 		public override void PositionCursor()
 		{
-			Move (0, selected-top);
+			Move(0, selected - top);
 		}
 
 		public override bool MouseEvent(MouseEvent me)
 		{
-			if (!me.Flags.HasFlag (MouseFlags.Button1Clicked))
+			if (!me.Flags.HasFlag(MouseFlags.Button1Clicked))
 				return false;
 
-			if (!HasFocus) 
-				SuperView.SetFocus (this);
+			if (!HasFocus)
+				SuperView.SetFocus(this);
 
 			if (source == null)
 				return false;
-			
+
 			if (me.Y + top >= source.Count)
 				return true;
 
-			selected = top + me.Y;
+			var newSelected = top + me.Y;
+			if (newSelected == selected) Source.SetMark(selected, !Source.IsMarked(selected));
+
+			selected = newSelected;
+
 			if (SelectedChanged != null)
 				SelectedChanged();
-			SetNeedsDisplay ();
+			SetNeedsDisplay();
 			return true;
+		}
+
+		//
+		// This class is the built-in IListDataSource that renders arbitrary
+		// IList instances
+		//
+		class ListWrapper : IListDataSource {
+			readonly int count;
+			readonly BitArray marks;
+			readonly IList src;
+
+			public ListWrapper(IList source)
+			{
+				count = source.Count;
+				marks = new BitArray(count);
+				src = source;
+			}
+
+			public int Count => src.Count;
+
+			public void Render(ListView container, ConsoleDriver driver, bool marked, int item, int col, int line, int width)
+			{
+				container.Move(col, line);
+				var t = src[item];
+				if (t is ustring)
+					RenderUstr(driver, (ustring) t, col, line, width);
+				else if (t is string)
+					RenderUstr(driver, (string) t, col, line, width);
+				else
+					RenderUstr(driver, t.ToString(), col, line, width);
+			}
+
+			public bool IsMarked(int item)
+			{
+				if (item >= 0 && item < count)
+					return marks[item];
+				return false;
+			}
+
+			public void SetMark(int item, bool value)
+			{
+				if (item >= 0 && item < count)
+					marks[item] = value;
+			}
+
+			void RenderUstr(ConsoleDriver driver, ustring ustr, int col, int line, int width)
+			{
+				var byteLen = ustr.Length;
+				var used = 0;
+				for (var i = 0; i < byteLen;) {
+					var (rune, size) = Utf8.DecodeRune(ustr, i, i - byteLen);
+					var count = Rune.ColumnWidth(rune);
+					if (used + count >= width)
+						break;
+					driver.AddRune(rune);
+					used += count;
+					i += size;
+				}
+
+				for (; used < width; used++) driver.AddRune(' ');
+			}
 		}
 	}
 }

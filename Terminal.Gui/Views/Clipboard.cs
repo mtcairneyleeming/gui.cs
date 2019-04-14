@@ -1,5 +1,4 @@
-﻿using System;
-using NStack;
+﻿using NStack;
 
 namespace Terminal.Gui {
 	public static class Clipboard {

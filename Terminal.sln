@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{B0A602CD-E176-449D-8663-64238D54F857}"
@@ -6,6 +6,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terminal.Gui", "Terminal.Gui\Terminal.Gui.csproj", "{00F366F8-DEE4-482C-B9FD-6DB0200B79E5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Designer", "Designer\Designer.csproj", "{1228D992-C801-49BB-839A-7BD28A3FFF0A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScrollTest", "ScrollTest\ScrollTest.csproj", "{4761BF70-1727-437D-99D3-503C2AD41EDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +27,10 @@ Global
 		{1228D992-C801-49BB-839A-7BD28A3FFF0A}.Debug|x86.Build.0 = Debug|x86
 		{1228D992-C801-49BB-839A-7BD28A3FFF0A}.Release|x86.ActiveCfg = Release|x86
 		{1228D992-C801-49BB-839A-7BD28A3FFF0A}.Release|x86.Build.0 = Release|x86
+		{4761BF70-1727-437D-99D3-503C2AD41EDB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4761BF70-1727-437D-99D3-503C2AD41EDB}.Debug|x86.Build.0 = Debug|Any CPU
+		{4761BF70-1727-437D-99D3-503C2AD41EDB}.Release|x86.ActiveCfg = Release|Any CPU
+		{4761BF70-1727-437D-99D3-503C2AD41EDB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		Policies = $0
